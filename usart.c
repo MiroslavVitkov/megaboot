@@ -32,7 +32,7 @@ void usart_transmit( unsigned char data )
 	UDR = data;					//Put data into buffer, sends the data
 }
 
-void usart_transmit_block(unsigned char *const data, unsigned char bytes )
+void usart_transmit_block(const unsigned char *data, unsigned char bytes )
 {
 	for(int i = bytes; i > 0; --i)
         {
@@ -56,7 +56,7 @@ char usart_receive(void)
 }
 
 void usart_flush( void ){
-	unsigned char dummy;
+	unsigned char dummy; (void)dummy;
 	while ( UCSRA & (1<<RXC) ) dummy = UDR;
 }
 

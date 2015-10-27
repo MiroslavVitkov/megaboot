@@ -1,27 +1,41 @@
 #include <avr/io.h>
 #include <avr/boot.h>
+#include <avr/interrupt.h>
 #include <stdint.h>
 
-#define assert(x) void(x)
+#include "usart.h"
+
+#define NDEBUG
+
+// Custom runtime assert statement.
+#undef assert
+void handle_error(int err_num, char *fname, int line_num, const char *foo) {};
+#ifdef NDEBUG
+#define assert(expr)
+#else
+#define assert(expr) (void)((expr) || (handle_error(0, __FILE__, __LINE__, __func__), 0))
+#endif
+
 #define APPLICATION_SECTION_END_PAGES 24  // TODO: move to config file and calculate automatically.
 
 // Write one Flash page.
 // 'buff' needs to be 'SPM_PAGESIZE' bytes long.
 // We CAN`T jump to the application later because we did not call 'boot_rww_enable()'.
-void program_flash_page(unsigned page_number, char buff[])
+void program_flash_page(unsigned page_number, char buffer[])
 {
     assert(page_number < APPLICATION_SECTION_END_PAGES);  // Guard against overwriting the bootloader section.
 
     boot_page_erase(page_number);
     boot_spm_busy_wait();                        // Wait until the memory is erased.
 
+    char *buff = buffer;
     for(int i = 0; i < SPM_PAGESIZE; i += 2)
     {
         // Set up little-endian word.
-        uint16_t w = *buf++;
-        w += (*buf++) << 8;
+        uint16_t w = *buff++;
+        w += (*buff++) << 8;
 
-        boot_page_fill (page + i, w);
+        boot_page_fill (page_number + i, w);
     }
 
   boot_page_write(page_number);
@@ -36,9 +50,9 @@ void program_flash_page(unsigned page_number, char buff[])
 // Return: 1 - EOF was received, 0 - normal packet, -1 - error
 int receive_usart_packet(char page_buffer[])
 {
-WAIT_SOH:
-    char first_byte = usart_reveive();
-    switch(first byte)
+WAIT_SOH: ;
+    char first_byte = usart_receive();
+    switch(first_byte)
     {
         case ASCII_EOT:
             return 1;
@@ -51,16 +65,18 @@ WAIT_SOH:
     uint8_t packet_number = usart_receive();
     uint8_t packet_number_inverted = usart_receive();
     assert(packet_number = ~packet_number_inverted);
-    assert(static unsigned packet_number_counter = 1, packet_number_counter++ = packet_number);
+    assert((static unsigned packet_number_counter = 1, packet_number_counter++ = packet_number));
 
     for(unsigned i = 0; i < SPM_PAGESIZE; ++i)
     {
-        g_page_buffer[i] = usart_receive();
+        page_buffer[i] = usart_receive();
     }
 
-    const uint8_t expected_checksum = usart_receive();
+    const uint8_t expected_checksum = usart_receive();  // TODO: there are 1-byte and 2-byte variations of the protocol!
     uint8_t checksum = 0;
-    assert(for(int i = 0; i < SPM_PAGESIZE; ++i) {checksum += buff[i]}, expected_checksum == checksum);  // Unsigned overflow is deterministic and safe.
+    assert((for(int i = 0; i < SPM_PAGESIZE; ++i) {checksum += buff[i]}, expected_checksum == checksum));  // Unsigned overflow is deterministic and safe.
+
+    return 0;  // PAcket received successfully.
 }
 
 
