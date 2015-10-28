@@ -5,6 +5,8 @@
 
 #include "usart.h"
 #include "config.h"
+#include <util/delay.h>
+
 
 #define NDEBUG  // TODO: move to the config file
 
@@ -47,10 +49,10 @@ void program_flash_page(unsigned page_number, char buffer[])
 // Receive one XMODEM packet.
 // Check for errors as provided by the protocol.
 // Parameter: 'char page_buffer[SPM_PAGESIZE]'.
-// Return: 1 - EOF was received, 0 - normal packet, -1 - error
+// Return: 1 - EOF was received, 0 - normal packet, <0 - error
 // See: https://en.wikipedia.org/wiki/XMODEM
 // See: http://www.atmel.com/Images/doc1472.pdf
-int receive_usart_packet(char page_buffer[])
+error_t receive_usart_packet(char page_buffer[])
 {
     char first_byte = usart_receive();
     switch(first_byte)
@@ -60,16 +62,19 @@ int receive_usart_packet(char page_buffer[])
         case ASCII_SOH:
             break;        // Execute body of the function.
         default:
-            return -1;
+            return ERROR_PROTOCOL_FIRST_CHARACTER;
     }
 
     uint8_t packet_number = usart_receive();
     uint8_t packet_number_inverted = usart_receive();
-    static unsigned packet_counter = 1;                   // First packet is number 1, not 0.
-    if((packet_number != ~packet_number_inverted) ||
-       (packet_counter != packet_number))  // TODO: send ACK and ignore packet
+    static unsigned packet_counter = 1;                      // First packet is number 1, not 0.
+    if((uint8_t)(~packet_number_inverted) != packet_number)  // Cast because of integer promotion.
     {
-        return -1;
+        return ERROR_PROTOCOL_PACKET_NUMBER_INVERSION;
+    }
+    if(packet_counter != packet_number)           // TODO: send ACK and ignore duplicate packet
+    {
+        return ERROR_PROTOCOL_PACKET_NUMBER_ORDER;
     }
 
     for(unsigned i = 0; i < SPM_PAGESIZE; ++i)
@@ -78,39 +83,37 @@ int receive_usart_packet(char page_buffer[])
     }
 
     const uint8_t expected_checksum = usart_receive();  // 1-byte if initial request was NACK, 2-byte if initial request was 'C'.
-    uint8_t checksum = first_byte + packet_number + packet_number_inverted;
+    uint8_t checksum = 0;
     for(int i = 0; i < SPM_PAGESIZE; ++i)
     {
         checksum += page_buffer[i];                     // Unsigned overflow is deterministic and safe.
     }
     if(expected_checksum != checksum)
     {
-        return -1;
+        return ERROR_PROTOCOL_CRC;
     }
 
     ++packet_counter;
-    return 0;  // Packet received successfully.
+    return 0;                                           // Packet received successfully.
 }
 
 
 // We are supposed to arrive here after a jump from the application section.
 // Next we anticipate XMODEM transmission of new application data.
 // In the end we state success of failure via the serial conenction and wait for a cold reset.
-#include <util/delay.h>
 void main(void)
 {
-    char page_buffer[SPM_PAGESIZE];
+    char page_buffer[SPM_PAGESIZE];               // 64 bytes for an atmega8
     unsigned page_number = 0;
 
     cli();
     usart_init();
-//    usart_transmit(ASCII_NACK);                   // Request file transfer.
+    usart_transmit(ASCII_NACK);                   // Request file transfer.
 
-usart_transmit(ASCII_NACK);
-while(1) {_delay_ms(300); usart_transmit(ASCII_ACK);};
     while(1)
     {
         int packet_type = receive_usart_packet(page_buffer);
+while(1) {usart_transmit(packet_type + 100); _delay_ms(500);};
         switch(packet_type)
         {
             case 1:                               // This is the last packet. It does not contain data.
