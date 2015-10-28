@@ -21,8 +21,9 @@ fuses:
 	sudo avrdude -p $(UC) -c usbasp -U lfuse:w:0xE4:m -U hfuse:w:0xD9:m
 # Default for the atmega8 is lfuse:e1, hfuse:d9
 # Low fuse for 8MHz clock: E4
-# High fuse with 1024 words, start at app start: D9
-# High fuse with 1024 words, start at bootloader start: D8
+# High fuse with 1024 words bootloader, start at app start: D9
+# High fuse with 1024 words bootloader, start at bootloader start: D8
+# High fuse with <2 * 128> bytes bootloader, start at app start: DF
 
 clean:
 	rm -f build/*
