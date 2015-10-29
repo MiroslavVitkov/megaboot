@@ -5,8 +5,6 @@
 
 #include "usart.h"
 #include "config.h"
-#include <util/delay.h>
-
 
 #define NDEBUG  // TODO: move to the config file
 
@@ -93,13 +91,6 @@ error_t receive_xmodem_packet(char payload_buffer[])
 
     if(expected_checksum != checksum)
     {
-while(1)
-{
-usart_transmit(SPM_PAGESIZE); usart_transmit(';');
-usart_transmit(payload_buffer[0]+50); usart_transmit(' '); usart_transmit(payload_buffer[10]+50); usart_transmit(';');
-usart_transmit(expected_checksum); usart_transmit(' '); usart_transmit(checksum);
-usart_transmit('\r'); usart_transmit('\n'); _delay_ms(1000);
-}
         return ERROR_PROTOCOL_CRC;
     }
 
@@ -114,8 +105,8 @@ usart_transmit('\r'); usart_transmit('\n'); _delay_ms(1000);
 void main(void)
 {
     char xmodem_payload[XMODEM_PAYLOAD_BYTES];
-    char page_buffer[SPM_PAGESIZE];               // 64 bytes for an atmega8
-    unsigned page_number = 0;
+    //char page_buffer[SPM_PAGESIZE];               // 64 bytes for an atmega8
+    //unsigned page_number = 0;
 
     cli();
     usart_init();
@@ -124,14 +115,14 @@ void main(void)
     while(1)
     {
         int packet_type = receive_xmodem_packet(xmodem_payload);
-while(1) {usart_transmit(packet_type + 100); _delay_ms(500);};
         switch(packet_type)
         {
             case 1:                               // This is the last packet. It does not contain data.
                 usart_transmit(ASCII_ACK);
                 goto FINISHED;
             case 0:                               // Packet accepted correctly, proceed to next one.
-                program_flash_page(page_number++, page_buffer);
+                usart_transmit(ASCII_ACK);
+                //program_flash_page(page_number++, page_buffer);
                 break;
             case -1:                              // Error in transmission, request resend of packet.
                 usart_transmit(ASCII_NACK);
