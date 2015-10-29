@@ -10,6 +10,8 @@
 
 #define NDEBUG  // TODO: move to the config file
 
+#define XMODEM_PAYLOAD_BYTES 128
+
 // Custom runtime assert statement.
 #undef assert
 #ifdef NDEBUG
@@ -48,11 +50,11 @@ void program_flash_page(unsigned page_number, char buffer[])
 
 // Receive one XMODEM packet.
 // Check for errors as provided by the protocol.
-// Parameter: 'char page_buffer[SPM_PAGESIZE]'.
+// Parameter: 'char payload_buffer[XMODEM_PAYLOAD_BYTES]' is an output.
 // Return: 1 - EOF was received, 0 - normal packet, <0 - error
 // See: https://en.wikipedia.org/wiki/XMODEM
 // See: http://www.atmel.com/Images/doc1472.pdf
-error_t receive_usart_packet(char page_buffer[])
+error_t receive_xmodem_packet(char payload_buffer[])
 {
     char first_byte = usart_receive();
     switch(first_byte)
@@ -77,19 +79,27 @@ error_t receive_usart_packet(char page_buffer[])
         return ERROR_PROTOCOL_PACKET_NUMBER_ORDER;
     }
 
-    for(unsigned i = 0; i < SPM_PAGESIZE; ++i)
+    for(unsigned i = 0; i < XMODEM_PAYLOAD_BYTES; ++i)
     {
-        page_buffer[i] = usart_receive();
+        payload_buffer[i] = usart_receive();
     }
 
     const uint8_t expected_checksum = usart_receive();  // 1-byte if initial request was NACK, 2-byte if initial request was 'C'.
     uint8_t checksum = 0;
-    for(int i = 0; i < SPM_PAGESIZE; ++i)
+    for(int i = 0; i < XMODEM_PAYLOAD_BYTES; ++i)
     {
-        checksum += page_buffer[i];                     // Unsigned overflow is deterministic and safe.
+        checksum += payload_buffer[i];                     // Unsigned overflow is deterministic and safe.
     }
+
     if(expected_checksum != checksum)
     {
+while(1)
+{
+usart_transmit(SPM_PAGESIZE); usart_transmit(';');
+usart_transmit(payload_buffer[0]+50); usart_transmit(' '); usart_transmit(payload_buffer[10]+50); usart_transmit(';');
+usart_transmit(expected_checksum); usart_transmit(' '); usart_transmit(checksum);
+usart_transmit('\r'); usart_transmit('\n'); _delay_ms(1000);
+}
         return ERROR_PROTOCOL_CRC;
     }
 
@@ -103,6 +113,7 @@ error_t receive_usart_packet(char page_buffer[])
 // In the end we state success of failure via the serial conenction and wait for a cold reset.
 void main(void)
 {
+    char xmodem_payload[XMODEM_PAYLOAD_BYTES];
     char page_buffer[SPM_PAGESIZE];               // 64 bytes for an atmega8
     unsigned page_number = 0;
 
@@ -112,7 +123,7 @@ void main(void)
 
     while(1)
     {
-        int packet_type = receive_usart_packet(page_buffer);
+        int packet_type = receive_xmodem_packet(xmodem_payload);
 while(1) {usart_transmit(packet_type + 100); _delay_ms(500);};
         switch(packet_type)
         {
