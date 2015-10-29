@@ -1,35 +1,26 @@
 #include "usart.h"
+#include "config.h"
 
 #include <avr/io.h>
-
-// TODO: extract the configuration values to the header file.
-
-/*
-//calculate baudrate register
-#define BAUDREG            ((unsigned int)((F_CPU * 10) / (16UL * BAUDRATE) - 5) / 10)
-
-//check baudrate register error
-//mocro below maybe not same in different C compiler
-#define FreqTemp           (16UL * BAUDRATE * (((F_CPU * 10) / (16 * BAUDRATE) + 5)/ 10))
-#if ((FreqTemp * 50) > (51 * F_CPU)) || ((FreqTemp * 50) < (49 * F_CPU))
-#error "BaudRate error > 2% ! Please check BaudRate and F_CPU value."
-#endif
-*/
-
-#define UBRR_FOR_BAUD_RATE_38K4_CPU_CLOCK_8M 12
+#include <util/setbaud.h>    // F_CPU and BAUD defined in config.h
 
 void usart_init(void)
 {
-	UBRRH = (unsigned char)(UBRR_FOR_BAUD_RATE_38K4_CPU_CLOCK_8M>>8);	//Set baud rate
-	UBRRL = (unsigned char)UBRR_FOR_BAUD_RATE_38K4_CPU_CLOCK_8M;
-	UCSRB = (1<<RXEN)|(1<<TXEN);						//Enable receiver and transmitter
-	UCSRC = (1<<URSEL) | (3<<UCSZ0);                                        //Set frame format: 8 data bits, 1 stop bit, no parity aka 8N1
+	UBRRH = UBRRH_VALUE;                            //Set baud rate.
+	UBRRL = UBRRL_VALUE;
+#if USE_2X                                              // We are operating in asychronous mode: we need this consideration.
+        UCSRA |= (1 << U2X);
+#else
+        UCSRA &= ~(1 << U2X);
+#endif
+	UCSRB = (1<<RXEN)|(1<<TXEN);			// Enable receiver and transmitter
+	UCSRC = (1<<URSEL) | (3<<UCSZ0);                // Set frame format: 8 data bits, 1 stop bit, no parity aka 8N1
 }
 
 void usart_transmit( unsigned char data )
 {
-	while ( !( UCSRA & (1<<UDRE)) );		//Wait for empty transmit buffer
-	UDR = data;					//Put data into buffer, sends the data
+	while ( !( UCSRA & (1<<UDRE)) );		// Wait for empty transmit buffer
+	UDR = data;					// Put data into buffer, sends the data
 }
 
 void usart_transmit_block(const unsigned char *data, unsigned char bytes )

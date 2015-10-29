@@ -6,8 +6,6 @@
 #include "usart.h"
 #include "config.h"
 
-#define NDEBUG  // TODO: move to the config file
-
 #define XMODEM_PAYLOAD_BYTES 128
 
 // Custom runtime assert statement.
@@ -18,8 +16,6 @@
 void handle_error(int err_num, char *fname, int line_num, const char *foo) {};
 #define assert(expr) (void)((expr) || (handle_error(0, __FILE__, __LINE__, __func__), 0))
 #endif
-
-#define APPLICATION_SECTION_END_PAGES 24  // TODO: move to config file and calculate automatically.
 
 // Write one Flash page.
 // 'buff' needs to be 'SPM_PAGESIZE' bytes long.

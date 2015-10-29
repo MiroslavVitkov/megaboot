@@ -1,8 +1,17 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-//cpu
+// Disable assert macros for smaller code size and faster execution.
+#define NDEBUG
+
+// CPU nominal frequency, Hz.
 #define F_CPU 8000000
+
+// USART baud rate.
+#define BAUD 38400
+
+// Last page available to the application section. Next page is part of the bootloader section.
+#define APPLICATION_SECTION_END_PAGES 24
 
 typedef enum
 {
