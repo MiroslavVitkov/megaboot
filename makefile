@@ -7,10 +7,9 @@ CFLAGS = -fpack-struct -Wall -Os -mcall-prologues -mmcu=$(UC) -Winline -finline-
 all:
 	#compile
 	avr-gcc $(CFLAGS) bootloader.c -c -o build/bootloader.o
-	avr-gcc $(CFLAGS) usart.c -c -o build/usart.o
 
 	#link
-	avr-gcc $(LDFLAGS) build/bootloader.o build/usart.o -o build/$(PROJNAME).out
+	avr-gcc $(LDFLAGS) build/bootloader.o -o build/$(PROJNAME).out
 	avr-objcopy -j .text -j .data -O $(HEXFORMAT) build/$(PROJNAME).out build/$(PROJNAME).hex
 
 .PHONY: upload fuses clean
