@@ -1,6 +1,6 @@
 PROJNAME=megaboot
 UC=atmega8
-LDFLAGS = -lm -lc -Wall -mmcu=$(UC)
+LDFLAGS = -lm -lc -Wall -mmcu=$(UC) -nostartfiles
 HEXFORMAT = ihex
 CFLAGS = -fpack-struct -Wall -Os -mcall-prologues -mmcu=$(UC) -Winline -finline-functions -Wstrict-prototypes --std=c99 -Winline -Wno-main -Wfatal-errors
 

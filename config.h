@@ -24,19 +24,3 @@ enum
 typedef int8_t error_t;
 
 #endif	//#ifndef _CONFIG_H_
-
-
-/*
-//If you will remove IVT(interrupt vect table), define macro noIVT to 1
-//and add "-nostartfiles" in linker option
-//remove interrupt vect table
-#if noIVT
-void initstack(void) __attribute__ ((section(".init9")));
-void initstack(void) 
-{
-  //set stack
-  asm volatile ( ".set __stack, %0" :: "i" (RAMEND) ); 
-  //jump to main function
-  asm volatile ( "rjmp main");
-}
-#endif*/

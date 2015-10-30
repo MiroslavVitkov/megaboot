@@ -17,6 +17,15 @@ void handle_error(int err_num, char *fname, int line_num, const char *foo) {};
 #define assert(expr) (void)((expr) || (handle_error(0, __FILE__, __LINE__, __func__), 0))
 #endif
 
+// Remove interrupt vector table.
+// REquired because we are linking with -nostartfiles.
+__attribute__ ((section(".init9"))) void initstack(void)
+{
+  __asm volatile (".set __stack, %0" :: "i" (RAMEND));  // Set stack.
+  __asm volatile ("in r1, 0");                          // R1 must at all times contain 0.
+  __asm volatile ("rjmp main");                         // Jump to main().
+}
+
 // Write one Flash page.
 // 'buff' needs to be 'SPM_PAGESIZE' bytes long.
 // We CAN`T jump to the application later because we did not call 'boot_rww_enable()'.
