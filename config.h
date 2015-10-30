@@ -13,14 +13,15 @@
 // Last page available to the application section. Next page is part of the bootloader section.
 #define APPLICATION_SECTION_END_PAGES 24
 
-typedef enum
+enum
 {
     ERROR_NONE                             =  0,
     ERROR_PROTOCOL_FIRST_CHARACTER         = -1,
     ERROR_PROTOCOL_PACKET_NUMBER_INVERSION = -2,
     ERROR_PROTOCOL_PACKET_NUMBER_ORDER     = -3,
     ERROR_PROTOCOL_CRC                     = -4,
-}error_t;
+};
+typedef int8_t error_t;
 
 #endif	//#ifndef _CONFIG_H_
 
