@@ -1,4 +1,4 @@
-PROJNAME=avr-bootloader
+PROJNAME=megaboot
 UC=atmega8
 LDFLAGS = -lm -lc -Wall -mmcu=$(UC)
 HEXFORMAT = ihex
@@ -26,4 +26,6 @@ fuses:
 # High fuse with <2 * 128> bytes bootloader, start at app start: DF
 
 clean:
+	@mv build/empty.txt .
 	rm -f build/*
+	@mv empty.txt build/
