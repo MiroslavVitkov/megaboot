@@ -1,6 +1,8 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+#include <stdint.h>
+
 // Disable assert macros for smaller code size and faster execution.
 #define NDEBUG
 

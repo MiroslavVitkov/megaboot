@@ -6,6 +6,7 @@
 
 #include <avr/io.h>
 #include <util/setbaud.h>    // F_CPU and BAUD defined in config.h
+#include <stdint.h>
 
 #define NEWLINE "\r\n"
 enum
