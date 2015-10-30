@@ -82,25 +82,21 @@ error_t receive_xmodem_packet(char payload_buffer[])
         return ERROR_PROTOCOL_PACKET_NUMBER_ORDER;
     }
 
+    uint8_t checksum = 0;
     for(unsigned i = 0; i < XMODEM_PAYLOAD_BYTES; ++i)
     {
         payload_buffer[i] = usart_receive();
-    }
-
-    const uint8_t expected_checksum = usart_receive();  // 1-byte if initial request was NACK, 2-byte if initial request was 'C'.
-    uint8_t checksum = 0;
-    for(int i = 0; i < XMODEM_PAYLOAD_BYTES; ++i)
-    {
         checksum += payload_buffer[i];                     // Unsigned overflow is deterministic and safe.
     }
 
+    const uint8_t expected_checksum = usart_receive();     // 1-byte if initial request was NACK, 2-byte if initial request was 'C'.
     if(expected_checksum != checksum)
     {
         return ERROR_PROTOCOL_CRC;
     }
 
     ++packet_counter;
-    return 0;                                           // Packet received successfully.
+    return 0;                                              // Packet received successfully.
 }
 
 
