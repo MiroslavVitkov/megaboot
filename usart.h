@@ -15,8 +15,6 @@ enum
 
 void usart_init(void);
 void usart_transmit(unsigned char data);
-void usart_transmit_block(const unsigned char *data, unsigned char bytes);
 char usart_receive(void);  // Blocking!
-void usart_flush(void);
 
 #endif //#ifndef _USART_H_
