@@ -14,8 +14,11 @@
 // USART baud rate.
 #define BAUD 38400
 
-// Last page available to the application section. Next page is part of the bootloader section.
-#define APPLICATION_SECTION_END_PAGES 96
+// This macro is passed from the makefile.
+// It contains the byte address of the start of the bootloader section.
+// This depends upon device and the BOOTSZ[1, 0] bits.
+// YOU MUST SET THIS MANUALLY IN THE MAKEFILE.
+// #define BOOTLOAD 0x1800
 
 enum
 {

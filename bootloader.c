@@ -8,6 +8,9 @@
 
 #define XMODEM_PAYLOAD_BYTES 128
 
+// Last page available to the application section. Next page is part of the bootloader section.
+#define APPLICATION_SECTION_END_PAGES (BOOTLOAD / SPM_PAGESIZE)
+
 // Custom runtime assert statement.
 #undef assert
 #ifdef ERROR_CHECKING
@@ -148,13 +151,13 @@ void main(void)
                 goto FINISHED;
 
             case 0:                               // Packet accepted correctly, proceed to next one.
-                usart_transmit(ASCII_ACK);
                 page_ptr = xmodem_payload;
                 for(int i = 0; i < (XMODEM_PAYLOAD_BYTES / SPM_PAGESIZE); ++i)
                 {
                     program_flash_page(page_number++, page_ptr);
                     page_ptr += SPM_PAGESIZE;
                 }
+                usart_transmit(ASCII_ACK);        // Request another packet AFTER we have processed the previous.
                 break;
 
             default:                              // Error in transmission, request resend of packet.

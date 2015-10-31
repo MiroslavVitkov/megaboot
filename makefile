@@ -1,9 +1,14 @@
 PROJNAME  = megaboot
 UC        = atmega8
+BOOTLOAD  = 0x1800                                                         # byte address, start of bootlaoder
 LDFLAGS   = -lm -lc -Wall -mmcu=$(UC) -nostartfiles
 LDFLAGS   += -Wl,-Map,build/$(PROJNAME).map
+LDFLAGS   += -Wl,--section-start=.text=$(BOOTLOAD)
 HEXFORMAT = ihex
-CFLAGS    = -fpack-struct -Wall -Os -mcall-prologues -mmcu=$(UC) -Winline -finline-functions -Wstrict-prototypes --std=c11 -Winline -Wno-main -Wfatal-errors
+CFLAGS    = -fpack-struct -Os -mcall-prologues -mmcu=$(UC)
+CFLAGS    += -finline-functions --std=c11
+CFLAGS    += -Wall -Winline -Wstrict-prototypes -Wno-main -Wfatal-errors
+CFLAGS    += -DBOOTLOAD=$(BOOTLOAD)
 
 all:
 	#compile
@@ -18,7 +23,7 @@ upload:
 	sudo avrdude -p $(UC) -c usbasp -e -U flash:w:build/$(PROJNAME).hex
 
 fuses:
-	sudo avrdude -p $(UC) -c usbasp -U lfuse:w:0xE4:m -U hfuse:w:0xD9:m
+	sudo avrdude -p $(UC) -c usbasp -U lfuse:w:0xE4:m -U hfuse:w:0xD8:m
 # Default for the atmega8 is lfuse:e1, hfuse:d9
 # Low fuse for 8MHz clock: E4
 # High fuse with 1024 words bootloader, start at app start: D9
