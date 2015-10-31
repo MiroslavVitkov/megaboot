@@ -13,8 +13,6 @@ enum
 {
     ASCII_SOH  = 0x01,
     ASCII_EOT  = 0x04,
-    ASCII_Y    = 0x59,
-    ASCII_N    = 0x4e,
     ASCII_ACK  = 0x06,
     ASCII_NACK = 0x15,
 };

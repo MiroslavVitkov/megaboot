@@ -18,7 +18,7 @@ void handle_error(int err_num, char *fname, int line_num, const char *foo) {};
 #endif
 
 // Remove interrupt vector table.
-// REquired because we are linking with -nostartfiles.
+// Required because we are linking with -nostartfiles.
 __attribute__ ((section(".init9"))) void initstack(void)
 {
   __asm volatile (".set __stack, %0" :: "i" (RAMEND));  // Set stack.
@@ -29,14 +29,14 @@ __attribute__ ((section(".init9"))) void initstack(void)
 // Write one Flash page.
 // 'buff' needs to be 'SPM_PAGESIZE' bytes long.
 // We CAN`T jump to the application later because we did not call 'boot_rww_enable()'.
-void program_flash_page(unsigned page_number, char buffer[])
+void program_flash_page(unsigned page_number, const char buffer[])
 {
     assert(page_number < APPLICATION_SECTION_END_PAGES);  // Guard against overwriting the bootloader section.
 
     boot_page_erase(page_number);
     boot_spm_busy_wait();                                 // Wait until the memory is erased.
 
-    char *buff = buffer;
+    const char *buff = buffer;
     for(int i = 0; i < SPM_PAGESIZE; i += 2)
     {
         // Set up little-endian word.
@@ -48,6 +48,8 @@ void program_flash_page(unsigned page_number, char buffer[])
 
   boot_page_write(page_number);
   boot_spm_busy_wait();                                    // Wait until the memory is written.
+
+// TODO: verify
 }
 
 
@@ -106,8 +108,8 @@ error_t receive_xmodem_packet(char payload_buffer[])
 void main(void)
 {
     char xmodem_payload[XMODEM_PAYLOAD_BYTES];
-    //char page_buffer[SPM_PAGESIZE];               // 64 bytes for an atmega8
-    //unsigned page_number = 0;
+    const char *page_ptr;                         // SPM_PAGESIZE == 64 bytes for an atmega8
+    unsigned page_number = 0;
 
     cli();
     usart_init();
@@ -121,10 +123,17 @@ void main(void)
             case 1:                               // This is the last packet. It does not contain data.
                 usart_transmit(ASCII_ACK);
                 goto FINISHED;
+
             case 0:                               // Packet accepted correctly, proceed to next one.
                 usart_transmit(ASCII_ACK);
-                //program_flash_page(page_number++, page_buffer);
+                page_ptr = xmodem_payload;
+                for(int i = 0; i < (XMODEM_PAYLOAD_BYTES / SPM_PAGESIZE); ++i)
+                {
+                    program_flash_page(page_number++, page_ptr);
+                    page_ptr += SPM_PAGESIZE;
+                }
                 break;
+
             case -1:                              // Error in transmission, request resend of packet.
                 usart_transmit(ASCII_NACK);
                 break;
