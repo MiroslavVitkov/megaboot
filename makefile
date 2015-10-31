@@ -25,6 +25,9 @@ fuses:
 # High fuse with 1024 words bootloader, start at bootloader start: D8
 # High fuse with <2 * 128> bytes bootloader, start at app start: DF
 
+disasm:
+	avr-gcc $(CFLAGS) bootloader.c -S -o build/bootloader.S && nano build/bootloader.S
+
 clean:
 	@mv build/empty.txt .
 	rm -f build/*
