@@ -10,11 +10,25 @@
 
 // Custom runtime assert statement.
 #undef assert
+#ifdef ERROR_CHECKING
+    #undef NDEBUG
+#else
+    #define NDEBUG
+#endif
+
 #ifdef NDEBUG
 #define assert(expr)
 #else
-void handle_error(int err_num, char *fname, int line_num, const char *foo) {};
-#define assert(expr) (void)((expr) || (handle_error(0, __FILE__, __LINE__, __func__), 0))
+//void fatal_error(int err_num, char *fname, int line_num, const char *foo)
+void fatal_error(void)
+{
+    const error_t err_num = 63;    // ASCII_?
+    usart_transmit('E');
+    usart_transmit(err_num);
+    while(1);
+};
+//#define assert(expr) (void)((expr) || (fatal_error(0, __FILE__, __LINE__, __func__), 0))
+#define assert(expr) (void)((expr) || (fatal_error(), 0))
 #endif
 
 // Remove interrupt vector table.
@@ -49,7 +63,9 @@ void program_flash_page(unsigned page_number, const char buffer[])
   boot_page_write(page_number);
   boot_spm_busy_wait();                                    // Wait until the memory is written.
 
+#ifdef ERROR_CHECKING
 // TODO: verify
+#endif
 }
 
 
@@ -72,33 +88,40 @@ error_t receive_xmodem_packet(char payload_buffer[])
             return ERROR_PROTOCOL_FIRST_CHARACTER;
     }
 
-    uint8_t packet_number = usart_receive();
-    uint8_t packet_number_inverted = usart_receive();
+    uint8_t packet_number = usart_receive();                 ; (void)packet_number;
+    uint8_t packet_number_inverted = usart_receive();        ; (void)packet_number_inverted;
+#ifdef ERROR_CHECKING
     static unsigned packet_counter = 1;                      // First packet is number 1, not 0.
     if((uint8_t)(~packet_number_inverted) != packet_number)  // Cast because of integer promotion.
     {
         return ERROR_PROTOCOL_PACKET_NUMBER_INVERSION;
     }
-    if(packet_counter != packet_number)           // TODO: send ACK and ignore duplicate packet
+    if(packet_counter != packet_number)                      // TODO: send ACK and ignore duplicate packet
     {
         return ERROR_PROTOCOL_PACKET_NUMBER_ORDER;
     }
+#endif
 
-    uint8_t checksum = 0;
+    uint8_t checksum = 0;                                    ; (void)checksum;
     for(unsigned i = 0; i < XMODEM_PAYLOAD_BYTES; ++i)
     {
         payload_buffer[i] = usart_receive();
-        checksum += payload_buffer[i];                     // Unsigned overflow is deterministic and safe.
+#ifdef ERROR_CHECKING
+        checksum += payload_buffer[i];                       // Unsigned overflow is deterministic and safe.
+#endif
     }
 
-    const uint8_t expected_checksum = usart_receive();     // 1-byte if initial request was NACK, 2-byte if initial request was 'C'.
+    const uint8_t expected_checksum = usart_receive();       // 1-byte if initial request was NACK, 2-byte if initial request was 'C'.
+    (void)expected_checksum;
+#ifdef ERROR_CHECKING
     if(expected_checksum != checksum)
     {
         return ERROR_PROTOCOL_CRC;
     }
 
     ++packet_counter;
-    return 0;                                              // Packet received successfully.
+#endif
+    return 0;                                                // Packet received successfully.
 }
 
 
@@ -134,7 +157,7 @@ void main(void)
                 }
                 break;
 
-            case -1:                              // Error in transmission, request resend of packet.
+            default:                              // Error in transmission, request resend of packet.
                 usart_transmit(ASCII_NACK);
                 break;
         }

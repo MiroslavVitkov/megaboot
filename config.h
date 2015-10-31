@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 
-// Disable assert macros for smaller code size and faster execution.
-#define NDEBUG
+// If undefined, error checking on the XMODEM protocol is disabled.
+// Also, the flash writing routine is not protected form overwriting the bootloader section.
+// Furthermore, flash memory verification after write is not performed.
+#define ERROR_CHECKING
 
 // CPU nominal frequency, Hz.
 #define F_CPU 8000000
@@ -13,7 +15,7 @@
 #define BAUD 38400
 
 // Last page available to the application section. Next page is part of the bootloader section.
-#define APPLICATION_SECTION_END_PAGES 24
+#define APPLICATION_SECTION_END_PAGES 96
 
 enum
 {
