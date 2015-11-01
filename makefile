@@ -1,34 +1,45 @@
-PROJNAME  = megaboot
-UC        = atmega8
-BOOTLOAD  = 0x1800                                                         # byte address, start of bootlaoder
-LDFLAGS   = -lm -lc -Wall -mmcu=$(UC) -nostartfiles
-LDFLAGS   += -Wl,-Map,build/$(PROJNAME).map
-LDFLAGS   += -Wl,--section-start=.text=$(BOOTLOAD)
-HEXFORMAT = ihex
-CFLAGS    = -fpack-struct -Os -mcall-prologues -mmcu=$(UC)
-CFLAGS    += -finline-functions --std=c11
-CFLAGS    += -Wall -Winline -Wstrict-prototypes -Wno-main -Wfatal-errors
-CFLAGS    += -DBOOTLOAD=$(BOOTLOAD)
+PROJNAME        = megaboot
+UC              = atmega8
+BOOTLOAD        = 0x1E00 # byte address, start of bootlaoder
+HEXFORMAT       = ihex
+
+LDFLAGS         = -lm -lc -Wall -mmcu=$(UC)
+LDFLAGS_LOADER  = -nostartfiles
+LDFLAGS_LOADER += -Wl,-Map,build/bootloader.map
+LDFLAGS_LOADER += -Wl,--section-start=.text=$(BOOTLOAD)
+LDFLAGS_APP     = -Wl,-Map,build/test.map
+LDFLAGS_APP    += -Wl,--section-start=.text=0
+CFLAGS          = -fpack-struct -Os -mcall-prologues -mmcu=$(UC)
+CFLAGS         += -finline-functions --std=c11
+CFLAGS         += -Wall -Winline -Wstrict-prototypes -Wno-main -Wfatal-errors
+CFLAGS         += -DBOOTLOAD=$(BOOTLOAD)
 
 all:
-	#compile
+	# Compile.
 	avr-gcc $(CFLAGS) bootloader.c -c -o build/bootloader.o
+	avr-gcc $(CFLAGS) test.c -c -o build/test.o
 
-	#link
-	avr-gcc $(LDFLAGS) build/bootloader.o -o build/$(PROJNAME).out
-	avr-objcopy -j .text -j .data -O $(HEXFORMAT) build/$(PROJNAME).out build/$(PROJNAME).hex
+	# Link.
+	avr-gcc $(LDFLAGS) $(LDFLAGS_LOADER) build/bootloader.o -o build/bootloader.out
+	avr-gcc $(LDFLAGS) $(LDFLAGS_APP) build/test.o -o build/test.out
+	avr-objcopy -j .text -j .data -O $(HEXFORMAT) build/bootloader.out build/bootloader.hex
+	avr-objcopy -j .text -j .data -O $(HEXFORMAT) build/test.out build/test.hex
 
-.PHONY: upload fuses clean
+	# Combine.
+	srec_cat build/test.hex -I build/bootloader.hex -I -o build/$(PROJNAME).hex -I
+
+	# Report.
+	# If bootloader .text size exceeds 512 bytes, it will no longer fit in the NRWW section!
+	avr-size -B build/bootloader.out build/test.out
+
 upload:
 	sudo avrdude -p $(UC) -c usbasp -e -U flash:w:build/$(PROJNAME).hex
 
 fuses:
-	sudo avrdude -p $(UC) -c usbasp -U lfuse:w:0xE4:m -U hfuse:w:0xD8:m
-# Default for the atmega8 is lfuse:e1, hfuse:d9
-# Low fuse for 8MHz clock: E4
-# High fuse with 1024 words bootloader, start at app start: D9
-# High fuse with 1024 words bootloader, start at bootloader start: D8
-# High fuse with <2 * 128> bytes bootloader, start at app start: DF
+	sudo avrdude -p $(UC) -c usbasp -U lfuse:w:0xE4:m -U hfuse:w:0xDD:m
+	# Default for the atmega8 is lfuse:E1, hfuse:D9
+	# Low fuse for 8MHz clock: E4
+	# High fuse with 512 bytes bootloader, start at application start: DD
 
 disasm:
 	avr-gcc $(CFLAGS) bootloader.c -S -o build/bootloader.S && nano build/bootloader.S

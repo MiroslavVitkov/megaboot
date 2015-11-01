@@ -2,15 +2,18 @@ Purpose
 A minimalistic bootloader for the  Atmel mega8 microcontroller.
 
 Advantages
-Fits in the smallest selectable boot area.
-Works out of the box for atmega8.
-Reasonable error checking.
-Fewer components and wires compared to an in system programmer. 
++ Works out of the box for atmega8 under recent ubuntu.
++ Any serial terminal, that supports xmodem can be used. Tested with minicom. 
++ Fits into 512 bytes.
++ Reasonable error checking.
++ Fewer components and wires compared to an in system programmer. 
+- Invoked through the application, thus loosing the ruggedness of an unchangable bootloader.
+- Not universal at all. Try avrub for a configurable project, targeting many chips.
+- Non-automatable program upload (at lest with minicom).
 
 Preparation
-sudo apt-get install cu lrzsz gcc-avr avr-libc
+sudo apt-get install cu lrzsz srecord gcc-avr avr-libc
 
-Usage
 Hardware
 Connect Tx and Rx lines to a PC.
 Use MAX232 for serial port communication.
@@ -23,9 +26,13 @@ make
 make fuses
 make upload
 Now the bootloader is programmed into the higher section of the flash (the application still begins at 0x0).
-Program an application that jumps to the bootloader address (???).
-Before powering the board, iniciate firmware transfer from the connected PC.
+A minimal test program is programmed int othe applications section.
+This application will wait for a while and jump to the bootloader.
+Before the countdawn expires, you need to iniciate firmware transfer from the connected PC (that's how xmodem works).
+The transferred file will overwrite the test application and from now on will be reponsible for jumping to the bootloader.
+If you application becomes corrupted for any reason and can't jump to the bootloader, you will need to use the serial programmer and repeat installing the bootloader.
 
-Uploading the application
-The bootloader uses the XMODEM transfer protocol.
-cx (???)
+Building your application
+avr-gcc yourapp.c
+avr-objcopy -j .text -j .data -O binary yourapp.out yourapp.bin
+The file that you send to the bootloader is yourapp.bin.
