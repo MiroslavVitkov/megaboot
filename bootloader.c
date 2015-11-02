@@ -44,13 +44,14 @@ __attribute__ ((section(".init9"))) void initstack(void)
 }
 
 // Write one Flash page.
-// 'buff' needs to be 'SPM_PAGESIZE' bytes long.
+// 'buffer' needs to be 'SPM_PAGESIZE' bytes long.
+// 'page_offset' is the byte offset of the page
 // We CAN`T jump to the application later because we did not call 'boot_rww_enable()'.
-void program_flash_page(unsigned page_number, const char buffer[])
+void program_flash_page(unsigned page_offset, const char buffer[])
 {
-    assert(page_number < APPLICATION_SECTION_END_PAGES);  // Guard against overwriting the bootloader section.
+    assert(page_offset < BOOTLOAD);                       // Guard against overwriting the bootloader section.
 
-    boot_page_erase(page_number);
+    boot_page_erase(page_offset);
     boot_spm_busy_wait();                                 // Wait until the memory is erased.
 
     const char *buff = buffer;
@@ -60,10 +61,10 @@ void program_flash_page(unsigned page_number, const char buffer[])
         uint16_t w = *buff++;
         w += (*buff++) << 8;
 
-        boot_page_fill (page_number + i, w);
+        boot_page_fill (page_offset + i, w);
     }
 
-  boot_page_write(page_number);
+  boot_page_write(page_offset);
   boot_spm_busy_wait();                                    // Wait until the memory is written.
 
 #ifdef ERROR_CHECKING
@@ -135,7 +136,7 @@ void main(void)
 {
     char xmodem_payload[XMODEM_PAYLOAD_BYTES];
     const char *page_ptr;                         // SPM_PAGESIZE == 64 bytes for an atmega8
-    unsigned page_number = 0;
+    unsigned page_offset = 0;
 
     cli();
     usart_init();
@@ -154,7 +155,8 @@ void main(void)
                 page_ptr = xmodem_payload;
                 for(int i = 0; i < (XMODEM_PAYLOAD_BYTES / SPM_PAGESIZE); ++i)
                 {
-                    program_flash_page(page_number++, page_ptr);
+                    program_flash_page(page_offset, page_ptr);
+                    page_offset += SPM_PAGESIZE;
                     page_ptr += SPM_PAGESIZE;
                 }
                 usart_transmit(ASCII_ACK);        // Request another packet AFTER we have processed the previous.

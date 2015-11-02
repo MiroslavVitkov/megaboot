@@ -18,7 +18,7 @@
 // It contains the byte address of the start of the bootloader section.
 // This depends upon device and the BOOTSZ[1, 0] bits.
 // YOU MUST SET THIS MANUALLY IN THE MAKEFILE.
-// #define BOOTLOAD 0x1800
+// #define BOOTLOAD <byte_address>
 
 enum
 {
