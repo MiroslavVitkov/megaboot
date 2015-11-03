@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <avr/boot.h>
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h>
 #include <stdint.h>
 
 #include "usart.h"
@@ -23,11 +24,9 @@
 #define assert(expr)
 #else
 //void fatal_error(int err_num, char *fname, int line_num, const char *foo)
-void fatal_error(void)
+inline void fatal_error(void)
 {
-    const error_t err_num = 63;    // ASCII_?
     usart_transmit('E');
-    usart_transmit(err_num);
     while(1);
 };
 //#define assert(expr) (void)((expr) || (fatal_error(0, __FILE__, __LINE__, __func__), 0))
@@ -64,11 +63,21 @@ void program_flash_page(unsigned page_offset, const char buffer[])
         boot_page_fill (page_offset + i, w);
     }
 
-  boot_page_write(page_offset);
-  boot_spm_busy_wait();                                    // Wait until the memory is written.
+    boot_page_write(page_offset);
+    boot_spm_busy_wait();                                 // Wait until the memory is written.
 
 #ifdef ERROR_CHECKING
-// TODO: verify
+    // Verify flash content. Unfortunately this exceeds the 512 byte target size, so is commented out.
+//    boot_rww_enable();
+//    buff = buffer;
+//    for(unsigned i = 0; i < SPM_PAGESIZE; i+=2)
+//    {
+//        uint16_t w1 = *buff++;
+//        w1 += (*buff++) << 8;
+//
+//        uint16_t w2 = pgm_read_word_near(i + page_offset);
+//        assert(w1 == w2);
+//    }
 #endif
 }
 
