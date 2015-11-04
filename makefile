@@ -20,17 +20,17 @@ all:
 	avr-gcc $(CFLAGS) test.c -c -o build/test.o
 
 	# Link.
-	avr-gcc $(LDFLAGS) $(LDFLAGS_LOADER) build/bootloader.o -o build/bootloader.out
-	avr-gcc $(LDFLAGS) $(LDFLAGS_APP) build/test.o -o build/test.out
-	avr-objcopy -j .text -j .data -O $(HEXFORMAT) build/bootloader.out build/bootloader.hex
-	avr-objcopy -j .text -j .data -O $(HEXFORMAT) build/test.out build/test.hex
+	avr-gcc $(LDFLAGS) $(LDFLAGS_LOADER) build/bootloader.o -o build/bootloader.elf
+	avr-gcc $(LDFLAGS) $(LDFLAGS_APP) build/test.o -o build/test.elf
+	avr-objcopy -j .text -j .data -O $(HEXFORMAT) build/bootloader.elf build/bootloader.hex
+	avr-objcopy -j .text -j .data -O $(HEXFORMAT) build/test.elf build/test.hex
 
 	# Combine.
 	srec_cat build/test.hex -I build/bootloader.hex -I -o build/$(PROJNAME).hex -I
 
 	# Report.
 	# If bootloader .text size exceeds 512 bytes, it will no longer fit in the NRWW section!
-	avr-size -B build/bootloader.out build/test.out
+	avr-size -B build/bootloader.elf build/test.elf
 
 upload:
 	sudo avrdude -p $(UC) -c usbasp -e -U flash:w:build/$(PROJNAME).hex
