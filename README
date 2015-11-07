@@ -36,3 +36,8 @@ Building your application
 avr-gcc yourapp.c
 avr-objcopy -j .text -j .data -O binary yourapp.out yourapp.bin
 The file that you send to the bootloader is yourapp.bin.
+
+Contact
+For any recommendations or questions:
+Miroslav Vitkov
+sir.vorac@gmail.com
