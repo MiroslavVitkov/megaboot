@@ -12,6 +12,9 @@
 // Last page available to the application section. Next page is part of the bootloader section.
 #define APPLICATION_SECTION_END_PAGES (BOOTLOAD / SPM_PAGESIZE)
 
+// The flash writing routines expect an unsigned char.
+typedef unsigned char buff_t;
+
 // Custom runtime assert statement.
 #undef assert
 #ifdef ERROR_CHECKING
@@ -46,14 +49,14 @@ __attribute__ ((section(".init9"))) void initstack(void)
 // 'buffer' needs to be 'SPM_PAGESIZE' bytes long.
 // 'page_offset' is the byte offset of the page
 // We CAN`T jump to the application later because we did not call 'boot_rww_enable()'.
-void program_flash_page(unsigned page_offset, const char buffer[])
+void program_flash_page(unsigned page_offset, const buff_t buffer[])
 {
     assert(page_offset < BOOTLOAD);                       // Guard against overwriting the bootloader section.
 
     boot_page_erase(page_offset);
     boot_spm_busy_wait();                                 // Wait until the memory is erased.
 
-    const char *buff = buffer;
+    const buff_t *buff = buffer;
     for(int i = 0; i < SPM_PAGESIZE; i += 2)
     {
         // Set up little-endian word.
@@ -88,9 +91,9 @@ void program_flash_page(unsigned page_offset, const char buffer[])
 // Return: 1 - EOF was received, 0 - normal packet, <0 - error
 // See: https://en.wikipedia.org/wiki/XMODEM
 // See: http://www.atmel.com/Images/doc1472.pdf
-error_t receive_xmodem_packet(char payload_buffer[])
+error_t receive_xmodem_packet(buff_t payload_buffer[])
 {
-    char first_byte = usart_receive();
+    uint8_t first_byte = usart_receive();
     switch(first_byte)
     {
         case ASCII_EOT:
@@ -143,8 +146,8 @@ error_t receive_xmodem_packet(char payload_buffer[])
 // In the end we state success of failure via the serial conenction and wait for a cold reset.
 void main(void)
 {
-    char xmodem_payload[XMODEM_PAYLOAD_BYTES];
-    const char *page_ptr;                         // SPM_PAGESIZE == 64 bytes for an atmega8
+    buff_t xmodem_payload[XMODEM_PAYLOAD_BYTES];
+    const buff_t *page_ptr;                         // SPM_PAGESIZE == 64 bytes for an atmega8
     unsigned page_offset = 0;
 
     cli();
