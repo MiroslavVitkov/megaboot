@@ -1,8 +1,8 @@
 Purpose
-A minimalistic bootloader for the  Atmel mega8 microcontroller.
+A minimalistic bootloader for the  Atmel mega168 microcontroller.
 
 Advantages
-+ Works out of the box for atmega8 under recent ubuntu.
++ Works out of the box for atmega168 under recent ubuntu.
 + Any serial terminal, that supports xmodem can be used. Tested with minicom. 
 + Fits into 512 bytes.
 + Reasonable error checking.

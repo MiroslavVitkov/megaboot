@@ -20,35 +20,27 @@ enum
 
 inline void usart_init(void)
 {
-	UBRRH = UBRRH_VALUE;                            //Set baud rate.
-	UBRRL = UBRRL_VALUE;
-#if USE_2X                                              // We are operating in asychronous mode: we need this consideration.
-        UCSRA |= (1 << U2X);
+	UBRR0H = UBRRH_VALUE;                    // Set baud rate.
+	UBRR0L = UBRRL_VALUE;
+#if USE_2X                                       // We are operating in asychronous mode: we need this consideration.
+        UCSR0A |= (1 << U2X0);
 #else
-        UCSRA &= ~(1 << U2X);
+        UCSR0A &= ~(1 << U2X0);
 #endif
-	UCSRB = (1<<RXEN)|(1<<TXEN);			// Enable receiver and transmitter
-	UCSRC = (1<<URSEL) | (3<<UCSZ0);                // Set frame format: 8 data bits, 1 stop bit, no parity aka 8N1
+	UCSR0B = (1<<RXEN0)|(1<<TXEN0);          // Enable receiver and transmitter
+	UCSR0C = (3<<UCSZ00);                    // Set frame format: 8 data bits, 1 stop bit, no parity aka 8N1
 }
 
 inline void usart_transmit( unsigned char data )
 {
-	while ( !( UCSRA & (1<<UDRE)) );		// Wait for empty transmit buffer
-	UDR = data;					// Put data into buffer, sends the data
+	while ( !( UCSR0A & (1<<UDRE0)) );       // Wait for empty transmit buffer
+	UDR0 = data;                              // Put data into buffer, sends the data
 }
 
 inline char usart_receive(void)
 {
-	while ( !(UCSRA & (1<<RXC)) );	// Wait for data to be received.
-
-/*	if(UCSR0A & (1 << FE0))
-		return ERROR_USART_FRAME_ERROR;
-	if(UCSR0A & (1 << DOR0))
-		return ERROR_USART_DATA_OVERRUN_ERROR;
-	if(UCSR0A & (1 << UPE0))
-		return ERROR_USART_PARITY_ERROR;
-*/
-        char c = UDR;			// Get and return received data from buffer.
+	while ( !(UCSR0A & (1<<RXC0)) );         // Wait for data to be received.
+        char c = UDR0;                           // Get and return received data from buffer.
         return c;
 }
 

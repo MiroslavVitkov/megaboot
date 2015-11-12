@@ -1,6 +1,6 @@
 PROJNAME        = megaboot
-UC              = atmega8
-BOOTLOAD        = 0x1E00 # byte address, start of bootlaoder
+UC              = atmega168
+BOOTLOAD        = 0x3E00 # byte address, start of bootlaoder
 HEXFORMAT       = ihex
 
 LDFLAGS         = -lm -lc -Wall -mmcu=$(UC)
@@ -36,10 +36,10 @@ upload:
 	sudo avrdude -p $(UC) -c usbasp -e -U flash:w:build/$(PROJNAME).hex
 
 fuses:
-	sudo avrdude -p $(UC) -c usbasp -U lfuse:w:0xE4:m -U hfuse:w:0xDD:m
-	# Default for the atmega8 is lfuse:E1, hfuse:D9
-	# Low fuse for 8MHz clock: E4
-	# High fuse with 512 bytes bootloader, start at application start: DD
+	sudo avrdude -p $(UC) -c usbasp -U lfuse:w:0xE2:m -U hfuse:w:0xDF:m -U efuse:w:0x05:m
+	# Default for the atmega168 is lfuse:62, hfuse:df, efuse:01
+	# Low fuse for 8MHz clock: 0xE2
+	# Extended fuse with 512 bytes bootloader, start at application start: 0x05
 
 disasm:
 	avr-gcc $(CFLAGS) bootloader.c -S -o build/bootloader.S && nano build/bootloader.S
