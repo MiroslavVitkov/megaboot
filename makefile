@@ -16,8 +16,8 @@ CFLAGS         += -DBOOTLOAD=$(BOOTLOAD)
 
 all:
 	# Compile.
-	avr-gcc $(CFLAGS) bootloader.c -c -o build/bootloader.o
-	avr-gcc $(CFLAGS) test.c -c -o build/test.o
+	avr-gcc $(CFLAGS) src/bootloader.c -c -o build/bootloader.o
+	avr-gcc $(CFLAGS) src/test.c -c -o build/test.o
 
 	# Link.
 	avr-gcc $(LDFLAGS) $(LDFLAGS_LOADER) build/bootloader.o -o build/bootloader.elf
