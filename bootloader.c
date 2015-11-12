@@ -31,7 +31,7 @@ inline void fatal_error(void)
 {
     usart_transmit('E');
     while(1);
-};
+}
 //#define assert(expr) (void)((expr) || (fatal_error(0, __FILE__, __LINE__, __func__), 0))
 #define assert(expr) (void)((expr) || (fatal_error(), 0))
 #endif

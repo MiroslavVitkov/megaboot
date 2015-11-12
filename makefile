@@ -11,7 +11,7 @@ LDFLAGS_APP     = -Wl,-Map,build/test.map
 LDFLAGS_APP    += -Wl,--section-start=.text=0
 CFLAGS          = -fpack-struct -Os -mcall-prologues -mmcu=$(UC)
 CFLAGS         += -finline-functions --std=c11
-CFLAGS         += -Wall -Winline -Wstrict-prototypes -Wno-main -Wfatal-errors
+CFLAGS         += -Wall -Winline -Wstrict-prototypes -Wno-main -Wfatal-errors -Wpedantic
 CFLAGS         += -DBOOTLOAD=$(BOOTLOAD)
 
 all:
