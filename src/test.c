@@ -20,6 +20,6 @@ int main(int argc, char **argv)
     _delay_ms(3000);
 
     typedef void (* fn_ptr_t) (void);
-    fn_ptr_t my_ptr = (fn_ptr_t)0x1800;
+    fn_ptr_t my_ptr = (fn_ptr_t)BOOTLOAD;
     my_ptr();
 }
