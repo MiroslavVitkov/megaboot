@@ -24,6 +24,7 @@ all:
 	avr-gcc $(LDFLAGS) $(LDFLAGS_APP) build/test.o -o build/test.elf
 	avr-objcopy -j .text -j .data -O $(HEXFORMAT) build/bootloader.elf build/bootloader.hex
 	avr-objcopy -j .text -j .data -O $(HEXFORMAT) build/test.elf build/test.hex
+	avr-objcopy -j .text -j .data -O binary build/test.elf build/test.bin
 
 	# Combine.
 	srec_cat build/test.hex -I build/bootloader.hex -I -o build/$(PROJNAME).hex -I

@@ -26,11 +26,12 @@ make
 make fuses
 make upload
 Now the bootloader is programmed into the higher section of the flash (the application still begins at 0x0).
-A minimal test program is programmed int othe applications section.
+A minimal test program is programmed into the applications section.
 This application will wait for a while and jump to the bootloader.
-Before the countdawn expires, you need to iniciate firmware transfer from the connected PC (that's how xmodem works).
-The transferred file will overwrite the test application and from now on will be reponsible for jumping to the bootloader.
+Before the countdawn expires, you need to initiate firmware transfer from the connected PC (that's how xmodem works).
+The transferred file will overwrite the test application and from now on will be responsible for jumping to the bootloader.
 If you application becomes corrupted for any reason and can't jump to the bootloader, you will need to use the serial programmer and repeat installing the bootloader.
+You can use build/test.bin to test the xmodem upload process.
 
 Building your application
 avr-gcc yourapp.c
